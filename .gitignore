@@ -175,3 +175,5 @@ cython_debug/
 jobup-gemini-dev.json
 jobup-gemini-prod.json
 legacy/
+workday_jobs
+last_processed
