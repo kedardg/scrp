@@ -1,25 +1,32 @@
 # Workday Job Scraper
 
-A robust Python tool for scraping job listings from Workday-powered job sites. This scraper can search across multiple companies, filter results by location and posting date, and save results to JSON files.
+A robust Python tool for scraping job listings from Workday-powered job sites, featuring optional BERT-based semantic search for intelligent job matching. This scraper can search across multiple companies, filter results by location and posting date, and save results to a centralized JSON file.
 
 ## Features
 
-- **Unified Scraping**: Process multiple companies from a single YAML configuration
-- **Multi-threaded Processing**: Parallel processing of companies for faster execution
-- **Robust Error Handling**: Improved error detection and handling with intelligent retries
-- **Search Term Filtering**: Filter jobs by specific search terms (with optional fuzzy matching)
+- **Optional BERT-based Semantic Search**: Toggle between BERT embeddings or simple keyword matching for job relevance scoring
+- **Real-time Parallel Processing**: Jobs are processed and scored in parallel as they are found
+- **Centralized Results**: All jobs are stored in a single, sorted JSON file for easy access
+- **Comprehensive Term Mappings**: Rich domain-specific vocabulary mappings for AI/ML fields
+- **Intelligent Term Expansion**: Automatically expands search terms using domain-specific mappings
+- **Unified Scraping**: Process multiple companies from a single configuration
+- **Duplicate Prevention**: Automatically deduplicates jobs across companies
 - **Time-based Filtering**: Filter jobs based on posting date
 - **Location-based Filtering**: Option to filter for US-based jobs only
-- **Duplicate Prevention**: Automatically deduplicates jobs across primary and alternate URLs
-- **YAML Configuration**: Simple company configuration with multiple URL support
 
 ## Installation
 
 1. Clone this repository
 2. Install required packages:
+   ```bash
+   pip install -r requirements.txt
    ```
-   pip install requests pyyaml
-   ```
+
+## Requirements
+
+- Python 3.7+
+- CUDA-capable GPU (optional, for faster BERT processing)
+- Required Python packages are listed in requirements.txt
 
 ## Usage
 
@@ -32,25 +39,15 @@ python scrape_jobs.py
 ### Command Line Options
 
 ```
---job-result-path       Path to store job results
---last-processed-path   Path to store last processed information
---extract-start         Starting index for extraction
---extract-end           Ending index for extraction
---search-term           Single search term to use
---days-lookback, --days Number of days to look back
---threads               Number of parallel threads for processing companies
---companies-file        Path to YAML file containing companies and URLs
---throttle-wait         Throttle wait time in milliseconds (default: 10000)
---fuzzy                 Use fuzzy search for job matching
---no-fuzzy-search       Don't use fuzzy search for job matching
---global                Search jobs globally (disables US-only filter)
---all-time              Don't filter jobs by posting time
---convert-txt           Convert existing TXT files to YAML format
+JOB_RESULT_PATH=./path     Path to store job results
+LAST_PROCESSED_PATH=./path Path to store last processed information
+EXTRACT_START=N           Starting index for extraction
+EXTRACT_END=N            Ending index for extraction
 ```
 
-### Using Config File
+### Configuration
 
-Create a `config.json` file in the same directory:
+Create a `config.json` file with the following structure:
 
 ```json
 {
@@ -60,71 +57,102 @@ Create a `config.json` file in the same directory:
   "EXTRACT_END": 100,
   "DAYS_LOOKBACK": 5,
   "FILTER_US_ONLY": false,
-  "FILTER_BY_TIME": true,
-  "FUZZY_SEARCH": false,
-  "NUM_THREADS": 5,
-  "THROTTLE_WAIT_TIME": 15000,
+  "MIN_RELEVANCE_SCORE": 0.5,
+  "USE_BERT": true,
   "SEARCH_TERMS": [
     "Artificial Intelligence",
     "Machine Learning",
-    "Data Scientist"
-  ]
+    "Deep Learning",
+    "Applied AI"
+  ],
+  "term_mappings": {
+    "ai": "artificial intelligence AI machine learning deep learning...",
+    "ml": "machine learning ML deep learning neural networks...",
+    "deep_learning": "neural networks CNN RNN LSTM...",
+    // ... other mappings
+  }
 }
-```
-
-### Company Configuration
-
-Create a `workday_companies.yaml` file:
-
-```yaml
-companies:
-  - name: Company Name 1
-    url: https://companyname.wd1.myworkdayjobs.com/careers
-    alternate_urls:
-      - https://companyname-alt.wd3.myworkdayjobs.com/jobs
-  - name: Company Name 2
-    url: https://company2.wd5.myworkdayjobs.com/careers
-    alternate_urls: []
 ```
 
 ## How It Works
 
-1. Loads companies from YAML configuration
-2. For each company (including its alternate URLs):
-   - Searches for jobs matching the specified search terms
-   - Applies filters (time, location, search terms)
-   - Deduplicates jobs from primary and alternate URLs
-   - Saves results to a single JSON file per company
-3. Generates a summary of all processed jobs
+1. **Initialization**:
+   - Loads configuration from config.json
+   - Sets up job processor with parallel processing queue
+   - Initializes BERT model if USE_BERT is true
 
-## Advanced Error Handling
+2. **Job Processing Pipeline**:
+   - **Scraping Phase**:
+     - Scrapes jobs from Workday sites
+     - Applies basic filters (location, date)
+     - Checks for duplicates
+     - Adds valid jobs to processing queue
 
-The scraper uses specialized error handling to distinguish between different error types:
-- 429 Too Many Requests errors (throttling)
-- JSON parsing errors
-- Connection errors
-- Timeout errors
-- HTTP errors
+   - **Processing Phase** (runs in parallel):
+     - If USE_BERT is true:
+       - Jobs are processed by BERT in a separate thread
+       - Calculates semantic similarity scores
+     - If USE_BERT is false:
+       - Uses simple keyword matching
+       - Scores based on term presence in title/description
+     - Jobs meeting MIN_RELEVANCE_SCORE are saved
 
-When throttling is detected, the scraper implements exponential backoff to reduce pressure on the target servers.
+   - **Storage Phase**:
+     - All jobs are stored in a single all_jobs.json file
+     - Jobs are automatically sorted by:
+       1. Date (newest first)
+       2. Relevance score (highest first)
 
-## Example Output
+3. **Relevance Scoring**:
+   - **BERT Mode** (USE_BERT=true):
+     - Uses BERT embeddings for semantic understanding
+     - Title matches weighted 2x more than description
+     - Expands search terms using domain mappings
+     - Score range: 0.0-1.0 (semantic similarity)
 
-Output files are saved to the configured job result path (default: `./workday_jobs`) as JSON files.
+   - **Simple Mode** (USE_BERT=false):
+     - Basic keyword matching in title/description
+     - Title matches worth 0.6 points
+     - Description matches worth 0.4 points
+     - Score range: 0.0-1.0 (presence based)
 
-## Migrating from Text Files
-
-If you previously used TXT files to store company information, you can convert them to YAML format:
-
-```bash
-python scrape_jobs.py --convert-txt
-```
+4. **Output Format**:
+   Jobs are saved in JSON format with metadata:
+   ```json
+   {
+     "company_acronym": "COMPANY",
+     "title": "Job Title",
+     "description": "Full job description...",
+     "internal_id": "COMPANY_ID",
+     "location": "Location",
+     "remote_type": "Remote/Onsite",
+     "country": "Country",
+     "posted_date": "YYYY-MM-DD",
+     "url": "Job URL",
+     "search_term": "Matching search term",
+     "found_date": "YYYY-MM-DDTHH:MM:SS.SSSSSS",
+     "relevance_score": 0.85
+   }
+   ```
 
 ## Troubleshooting
 
-- **Throttle Errors**: Try increasing the `--throttle-wait` value
-- **Connection Errors**: Check your network connection or try using a VPN
-- **Empty Results**: Verify your search terms and try using the `--fuzzy` option
+- **Low Match Quality**: Try:
+  - Enabling BERT mode (USE_BERT=true)
+  - Adding more terms to term_mappings
+  - Lowering MIN_RELEVANCE_SCORE
+  - Using more specific search terms
+
+- **Performance Issues**: Consider:
+  - Disabling BERT (USE_BERT=false) for faster processing
+  - Using GPU acceleration for BERT
+  - Adjusting DAYS_LOOKBACK
+  - Focusing on specific companies (EXTRACT_START/END)
+
+- **Memory Usage**: If memory usage is too high:
+  - Disable BERT to use simple matching
+  - Process fewer companies at once
+  - Reduce DAYS_LOOKBACK
 
 ## License
 

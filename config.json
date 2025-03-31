@@ -2,33 +2,65 @@
   "JOB_RESULT_PATH": "./workday_jobs",
   "LAST_PROCESSED_PATH": "./last_processed",
   "EXTRACT_START": 0,
-  "EXTRACT_END": 123456,
-  "DAYS_LOOKBACK": 1,
+  "EXTRACT_END": 100,
+  "DAYS_LOOKBACK": 5,
   "FILTER_US_ONLY": false,
-  "FILTER_BY_TIME": true,
-  "FUZZY_SEARCH": false,
-  "GLOBAL_SEARCH": true,
+  "MIN_RELEVANCE_SCORE": 0.5,
   "NUM_THREADS": 5,
+  "USE_BERT": true,
   "SEARCH_TERMS": [
     "Artificial Intelligence",
-    "Machine Learning ",
-    "Deep Learning ",
-    "Applied AI ",
-    "ML/AI Systems ",
-    "LLM ",
-    "NLP  ",
-    "Generative AI ",
-    "RAG (Retrieval-Augmented Generation) ",
-    "Computer Vision ",
-    "Edge AI ",
-    "Robotics AI ",
-    "Embedded Machine Learning ",
-    "Autonomous Systems ",
-    "MLOps ",
-    "AI Infrastructure ",
-    "Machine Learning Platform ",
-    "AI Research Scientist",
-    "Explainable AI (XAI) Researcher",
-    "Data Scientist"
-  ]
+    "Machine Learning",
+    "Deep Learning",
+    "Applied AI",
+    "ML/AI Systems",
+    "LLM",
+    "NLP",
+    "Generative AI",
+    "RAG",
+    "Computer Vision"
+  ],
+  "term_mappings": {
+    "ai": "artificial intelligence AI machine learning deep learning neural networks autonomous systems robotics intelligent systems cognitive computing AI/ML edge AI embedded AI applied AI AI research AI engineering AI development AI solutions AI architecture",
+    
+    "ml": "machine learning ML deep learning neural networks pytorch tensorflow scikit-learn MLOps model training data science predictive modeling statistical learning machine learning engineer ML systems ML infrastructure ML pipeline ML architecture",
+    
+    "deep_learning": "neural networks CNN RNN LSTM transformer architecture pytorch tensorflow keras deep neural networks DNN backpropagation training optimization convolutional neural networks recurrent neural networks attention mechanisms transfer learning",
+    
+    "computer_vision": "CV computer vision image processing object detection semantic segmentation YOLO UNet EfficientNet ResNet VAE GAN ViT OpenCV image recognition visual AI CLIP image classification instance segmentation feature extraction SAM Meta SAM 2",
+    
+    "llm": "large language model LLM GPT-4 transformer language models NLP OpenAI API ChatGPT Vertex AI Ollama prompt engineering language understanding LLM evaluation LLM testing LLM benchmarking LLM optimization LLM fine-tuning",
+    
+    "rag": "retrieval augmented generation RAG vector database knowledge base information retrieval context awareness semantic search langchain document processing RAG debugging RAG evaluation RAG optimization RAG framework RAG system",
+    
+    "mlops": "MLOps CI/CD pipeline orchestration model deployment model monitoring drift detection testing frameworks model optimization containerization docker kubernetes Apache Airflow model versioning model registry model serving",
+    
+    "edge_ai": "edge computing embedded systems Nvidia Jetson Ambarella CV22 FPGA edge deployment quantization pruning TensorRT ONNX real-time inference edge optimization edge ML edge analytics embedded ML",
+    
+    "data_science": "data analysis pandas numpy matplotlib seaborn scipy data visualization statistical analysis feature engineering ETL pipeline data processing data mining data modeling data engineering",
+    
+    "xai": "explainable AI XAI model interpretability neuro-symbolic AI transparency model debugging interpretable ML model evaluation metrics model validation model verification model robustness adversarial testing",
+    
+    "generative_ai": "generative models GAN VAE diffusion models stable diffusion text-to-image image generation synthetic data augmentation generative adversarial networks variational autoencoders latent diffusion",
+    
+    "nlp": "natural language processing NLP computational linguistics text analysis language models sentiment analysis text classification information extraction BERT transformers token classification sequence labeling",
+    
+    "robotics": "robotics autonomous systems ROS navigation planning control systems sensor fusion localization mapping SLAM motion planning robotics perception robotics control autonomous navigation",
+    
+    "cloud_ml": "cloud computing GCP AWS cloud deployment serverless microservices cloud run vertex AI lambda functions distributed computing cloud infrastructure cloud optimization cloud scaling",
+    
+    "model_optimization": "model compression quantization pruning distillation layer fusion model efficiency performance optimization inference optimization TensorRT model acceleration hardware acceleration",
+    
+    "testing_frameworks": "unit testing integration testing system testing performance testing stress testing model testing evaluation metrics benchmarking quality assurance validation frameworks",
+    
+    "deployment": "production deployment model serving API development REST APIs Flask microservices containerization orchestration scaling monitoring observability",
+    
+    "tools_frameworks": "Git GitHub Actions Docker Kubernetes Jira CUDA PyTorch Lightning Weights & Biases MLflow DVC Optuna Ray Tune Gradio Streamlit FastAPI",
+    
+    "research_skills": "research methodology experimental design ablation studies literature review paper implementation model architecture design algorithm development",
+    
+    "system_design": "distributed systems scalable architecture high availability fault tolerance system optimization performance tuning bottleneck analysis",
+    
+    "interview_skills": "technical interviews coding challenges system design interviews ML design ML system design behavioral interviews project discussions"
+  }
 } 
