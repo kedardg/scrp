@@ -5,8 +5,9 @@ A robust Python tool for scraping job listings from Workday-powered job sites, f
 ## Features
 
 - **Optional BERT-based Semantic Search**: Toggle between BERT embeddings or simple keyword matching for job relevance scoring
+- **Parallel and Sequential Processing Options**: Choose between faster parallel processing or more memory-efficient sequential processing
 - **Real-time Parallel Processing**: Jobs are processed and scored in parallel as they are found
-- **Centralized Results**: All jobs are stored in a single, sorted JSON file for easy access
+- **Consolidated Results**: All jobs are automatically consolidated into a single file sorted by relevance score
 - **Comprehensive Term Mappings**: Rich domain-specific vocabulary mappings for AI/ML fields
 - **Intelligent Term Expansion**: Automatically expands search terms using domain-specific mappings
 - **Unified Scraping**: Process multiple companies from a single configuration
@@ -30,10 +31,21 @@ A robust Python tool for scraping job listings from Workday-powered job sites, f
 
 ## Usage
 
+### Available Scripts
+
+This project includes two versions of the scraper:
+
+- **scrape_jobs.py**: Parallel version that processes multiple companies simultaneously (faster but uses more memory)
+- **scrape_jobs_sequential.py**: Sequential version that processes one company at a time (slower but more memory-efficient)
+
 ### Basic Usage
 
 ```bash
+# Run the parallel version
 python scrape_jobs.py
+
+# Run the sequential version
+python scrape_jobs_sequential.py
 ```
 
 ### Command Line Options
@@ -41,8 +53,13 @@ python scrape_jobs.py
 ```
 JOB_RESULT_PATH=./path     Path to store job results
 LAST_PROCESSED_PATH=./path Path to store last processed information
-EXTRACT_START=N           Starting index for extraction
-EXTRACT_END=N            Ending index for extraction
+EXTRACT_START=N            Starting index for extraction
+EXTRACT_END=N              Ending index for extraction
+```
+
+Example:
+```bash
+python scrape_jobs.py JOB_RESULT_PATH=./my_jobs EXTRACT_START=0 EXTRACT_END=10
 ```
 
 ### Configuration
@@ -59,6 +76,8 @@ Create a `config.json` file with the following structure:
   "FILTER_US_ONLY": false,
   "MIN_RELEVANCE_SCORE": 0.5,
   "USE_BERT": true,
+  "NUM_THREADS": 2,
+  "MAX_RAM_PERCENT": 50,
   "SEARCH_TERMS": [
     "Artificial Intelligence",
     "Machine Learning",
@@ -98,10 +117,9 @@ Create a `config.json` file with the following structure:
      - Jobs meeting MIN_RELEVANCE_SCORE are saved
 
    - **Storage Phase**:
-     - All jobs are stored in a single all_jobs.json file
-     - Jobs are automatically sorted by:
-       1. Date (newest first)
-       2. Relevance score (highest first)
+     - Each company has its own JSON file
+     - All jobs are consolidated into a single file sorted by relevance score
+     - Located at `{JOB_RESULT_PATH}/consolidated_results.json`
 
 3. **Relevance Scoring**:
    - **BERT Mode** (USE_BERT=true):
@@ -135,6 +153,18 @@ Create a `config.json` file with the following structure:
    }
    ```
 
+## Parallel vs. Sequential Version
+
+- **When to use the parallel version (scrape_jobs.py)**:
+  - Faster execution time is a priority
+  - You have a system with adequate RAM
+  - You need to process a large number of companies
+  
+- **When to use the sequential version (scrape_jobs_sequential.py)**:
+  - Memory efficiency is a priority
+  - Running on a system with limited resources
+  - Troubleshooting issues with the parallel version
+
 ## Troubleshooting
 
 - **Low Match Quality**: Try:
@@ -150,9 +180,11 @@ Create a `config.json` file with the following structure:
   - Focusing on specific companies (EXTRACT_START/END)
 
 - **Memory Usage**: If memory usage is too high:
+  - Switch to the sequential version (scrape_jobs_sequential.py)
   - Disable BERT to use simple matching
-  - Process fewer companies at once
+  - Process fewer companies at once (EXTRACT_START/END)
   - Reduce DAYS_LOOKBACK
+  - Adjust MAX_RAM_PERCENT in config.json
 
 ## License
 
