@@ -7,6 +7,7 @@ A robust Python tool for scraping job listings from Workday-powered job sites, f
 - **Optional BERT-based Semantic Search**: Toggle between BERT embeddings or simple keyword matching for job relevance scoring
 - **Parallel and Sequential Processing Options**: Choose between faster parallel processing or more memory-efficient sequential processing
 - **Real-time Parallel Processing**: Jobs are processed and scored in parallel as they are found
+- **Robots.txt Compliance**: Automatically checks and respects robots.txt directives before scraping
 - **Consolidated Results**: All jobs are automatically consolidated into a single file sorted by relevance score
 - **Comprehensive Term Mappings**: Rich domain-specific vocabulary mappings for AI/ML fields
 - **Intelligent Term Expansion**: Automatically expands search terms using domain-specific mappings
@@ -78,6 +79,8 @@ Create a `config.json` file with the following structure:
   "USE_BERT": true,
   "NUM_THREADS": 2,
   "MAX_RAM_PERCENT": 50,
+  "CHECK_ROBOTS_TXT": true,
+  "ROBOTS_TXT_USER_AGENT": "WorkdayJobScraper",
   "SEARCH_TERMS": [
     "Artificial Intelligence",
     "Machine Learning",
@@ -93,6 +96,23 @@ Create a `config.json` file with the following structure:
 }
 ```
 
+### Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| JOB_RESULT_PATH | string | "./workday_jobs" | Path to store job results |
+| LAST_PROCESSED_PATH | string | "./last_processed" | Path to store last processed information |
+| EXTRACT_START | integer | 0 | Starting index for extraction |
+| EXTRACT_END | integer | 100 | Ending index for extraction |
+| DAYS_LOOKBACK | integer | 7 | Number of days to look back for jobs |
+| FILTER_US_ONLY | boolean | false | Filter for US-based jobs only |
+| MIN_RELEVANCE_SCORE | float | 0.5 | Minimum relevance score for jobs |
+| USE_BERT | boolean | true | Use BERT for semantic matching |
+| NUM_THREADS | integer | CPU count | Number of threads for parallel processing |
+| MAX_RAM_PERCENT | integer | 80 | Maximum RAM usage percentage |
+| CHECK_ROBOTS_TXT | boolean | true | Whether to check and respect robots.txt |
+| ROBOTS_TXT_USER_AGENT | string | "WorkdayJobScraper" | User agent for robots.txt requests |
+
 ## How It Works
 
 1. **Initialization**:
@@ -101,8 +121,13 @@ Create a `config.json` file with the following structure:
    - Initializes BERT model if USE_BERT is true
 
 2. **Job Processing Pipeline**:
+   - **Pre-scraping Checks**:
+     - Checks robots.txt for each domain
+     - Respects crawl directives and rate limits
+     - Caches robots.txt results for efficiency
+
    - **Scraping Phase**:
-     - Scrapes jobs from Workday sites
+     - Scrapes jobs from Workday sites (if allowed by robots.txt)
      - Applies basic filters (location, date)
      - Checks for duplicates
      - Adds valid jobs to processing queue
@@ -165,6 +190,32 @@ Create a `config.json` file with the following structure:
   - Running on a system with limited resources
   - Troubleshooting issues with the parallel version
 
+## Robots.txt Compliance
+
+The scraper includes built-in support for respecting robots.txt directives, which can be configured in `config.json`:
+
+```json
+{
+  "CHECK_ROBOTS_TXT": true,
+  "ROBOTS_TXT_USER_AGENT": "WorkdayJobScraper"
+}
+```
+
+- **CHECK_ROBOTS_TXT**: Enable/disable robots.txt checking
+  - Set to `true` to respect robots.txt directives (recommended)
+  - Set to `false` to bypass robots.txt checking (use with caution)
+
+- **ROBOTS_TXT_USER_AGENT**: Customize the user agent
+  - Default: "WorkdayJobScraper"
+  - Used to match rules in robots.txt files
+  - Some sites may have different rules for different user agents
+
+When robots.txt checking is enabled:
+- The scraper checks robots.txt before accessing any domain
+- Caches results to minimize requests
+- Skips domains that disallow scraping
+- Logs all robots.txt related decisions
+
 ## Troubleshooting
 
 - **Low Match Quality**: Try:
@@ -185,6 +236,12 @@ Create a `config.json` file with the following structure:
   - Process fewer companies at once (EXTRACT_START/END)
   - Reduce DAYS_LOOKBACK
   - Adjust MAX_RAM_PERCENT in config.json
+
+- **Access Denied Issues**: Check:
+  - robots.txt permissions
+  - Rate limiting settings
+  - Network/proxy configuration
+  - User agent restrictions
 
 ## License
 

@@ -11,6 +11,8 @@
   "MAX_RAM_PERCENT": 50,
   "CHECK_RAM_INTERVAL": 10,
   "MAX_TASKS_PER_CHILD": 5,
+  "CHECK_ROBOTS_TXT": true,
+  "ROBOTS_TXT_USER_AGENT": "WorkdayJobScraper",
   "SEARCH_TERMS": [
     "Artificial Intelligence",
     "Machine Learning",
