@@ -32,13 +32,63 @@ from collections import defaultdict
 from contextlib import contextmanager
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import logging
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 import multiprocessing as mp
+from urllib.robotparser import RobotFileParser
 
 # Global regex patterns for use across all processes
 URL_EXTRACTION_REGEX = r'https://([a-zA-Z0-9_]*).([a-zA-Z0-9_]*).[a-zA-Z0-9_]*.com/([a-zA-Z0-9_]*)'
 HTML_REPLACEMENT_REGEX = r'<[^>]*>'
 OLD_JOBS_THRESHOLD = 10  # Stop if we find this many old jobs in a row
+
+# Cache for robots.txt parsers
+robots_parser_cache = {}
+robots_parser_lock = Lock()
+
+def check_robots_txt(url: str, user_agent: str = '*') -> bool:
+    """
+    Check if scraping is allowed for the given URL according to robots.txt
+    
+    Args:
+        url (str): URL to check
+        user_agent (str): User agent to check permissions for
+        
+    Returns:
+        bool: True if scraping is allowed, False otherwise
+    """
+    try:
+        # Parse the URL to get the base domain
+        parsed_url = urlparse(url)
+        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+        
+        # Check cache first
+        with robots_parser_lock:
+            if base_url in robots_parser_cache:
+                rp = robots_parser_cache[base_url]
+            else:
+                # Create and configure the parser
+                rp = RobotFileParser()
+                rp.set_url(urljoin(base_url, '/robots.txt'))
+                
+                try:
+                    rp.read()
+                    # Cache the parser
+                    robots_parser_cache[base_url] = rp
+                except Exception as e:
+                    logging.warning(f"Error reading robots.txt for {base_url}: {e}")
+                    # If we can't read robots.txt, assume scraping is allowed
+                    return True
+        
+        # Check if scraping is allowed
+        can_fetch = rp.can_fetch(user_agent, url)
+        if not can_fetch:
+            logging.warning(f"Scraping not allowed for {url} according to robots.txt")
+        return can_fetch
+        
+    except Exception as e:
+        logging.error(f"Error checking robots.txt for {url}: {e}")
+        # If there's an error checking robots.txt, assume scraping is allowed
+        return True
 
 # Domain throttling implementation
 class DomainThrottler:
@@ -80,13 +130,15 @@ try:
         FILTER_US_ONLY = config.get('FILTER_US_ONLY', False)
         MIN_RELEVANCE_SCORE = config.get('MIN_RELEVANCE_SCORE', 0.5)
         USE_BERT = config.get('USE_BERT', True)
-        NUM_PROCESSES = config.get('NUM_THREADS', multiprocessing.cpu_count())  # Use NUM_THREADS from config for process count
-        MAX_RAM_PERCENT = config.get('MAX_RAM_PERCENT', 80)  # Default to 80% RAM utilization
-        CHECK_RAM_INTERVAL = config.get('CHECK_RAM_INTERVAL', 30)  # Check RAM every 30 seconds
+        NUM_PROCESSES = config.get('NUM_THREADS', multiprocessing.cpu_count())
+        MAX_RAM_PERCENT = config.get('MAX_RAM_PERCENT', 80)
+        CHECK_RAM_INTERVAL = config.get('CHECK_RAM_INTERVAL', 30)
         JOB_RESULT_PATH = config.get('JOB_RESULT_PATH', 'job_results')
         NUM_PROCESSES = config.get('NUM_PROCESSES', os.cpu_count())
         MAX_TASKS_PER_CHILD = config.get('MAX_TASKS_PER_CHILD', 100)
         NEGATIVE_TERMS = config.get('NEGATIVE_TERMS', [])
+        CHECK_ROBOTS_TXT = config.get('CHECK_ROBOTS_TXT', True)
+        ROBOTS_TXT_USER_AGENT = config.get('ROBOTS_TXT_USER_AGENT', 'WorkdayJobScraper')
 except Exception as e:
     print(f"Error loading config.json: {e}")
     SEARCH_TERMS = ['']
@@ -100,6 +152,8 @@ except Exception as e:
     JOB_RESULT_PATH = 'job_results'
     MAX_TASKS_PER_CHILD = 100
     NEGATIVE_TERMS = []
+    CHECK_ROBOTS_TXT = True
+    ROBOTS_TXT_USER_AGENT = 'WorkdayJobScraper'
 
 # Set default configs
 LAST_PROCESSED_PATH = "./last_processed"
@@ -635,6 +689,15 @@ def process_link(url, search_term, job_processor):
     # Generate acronym for the company
     COMPANY_ACRONYM = generate_acronym(URL_BASE)
 
+    # Build URLs for scraping
+    bulk_listings_url = f"https://{URL_BASE}.{WORKDAY_VERSION}.myworkdayjobs.com/wday/cxs/{URL_BASE}/{END_PATH}/jobs"
+    specific_listing_url = f"https://{URL_BASE}.{WORKDAY_VERSION}.myworkdayjobs.com/wday/cxs/{URL_BASE}/{END_PATH}"
+    
+    # Check robots.txt before proceeding if enabled
+    if CHECK_ROBOTS_TXT and not check_robots_txt(bulk_listings_url, ROBOTS_TXT_USER_AGENT):
+        logging.warning(f"Skipping {URL_BASE} - robots.txt disallows scraping")
+        return
+
     # Try to load existing jobs for this company
     existing_jobs = []
     filename = f"{JOB_RESULT_PATH}/{COMPANY_ACRONYM}.json"
@@ -649,19 +712,8 @@ def process_link(url, search_term, job_processor):
 
     print(f'\nGetting Jobs for: {COMPANY_ACRONYM} ({URL_BASE}.{WORKDAY_VERSION}) Last: {last_scraped.isoformat()}')
 
-    # Build URLs and payload
-    bulk_listings_url = f"https://{URL_BASE}.{WORKDAY_VERSION}.myworkdayjobs.com/wday/cxs/{URL_BASE}/{END_PATH}/jobs"
-    specific_listing_url = f"https://{URL_BASE}.{WORKDAY_VERSION}.myworkdayjobs.com/wday/cxs/{URL_BASE}/{END_PATH}"
-    
-    bulk_listings_payload = {
-        "limit": 20,
-        "offset": 0,
-        "searchText": search_term,
-        "appliedFacets": {"locationCountry": [""] if not FILTER_US_ONLY else ["USA"]}
-    }
-
     # Get initial response for job count
-    init_res = fetch_url('POST', bulk_listings_url, bulk_listings_payload)
+    init_res = fetch_url('POST', bulk_listings_url, {"limit": 20, "offset": 0, "searchText": search_term, "appliedFacets": {"locationCountry": [""] if not FILTER_US_ONLY else ["USA"]}})
     if init_res.get('error'):
         return
 
@@ -673,7 +725,7 @@ def process_link(url, search_term, job_processor):
     print(f'Total: {job_total} for search term |{search_term}|')
     
     while job_seen < job_total:
-        bulk_listings_payload['offset'] = job_seen
+        bulk_listings_payload = {"limit": 20, "offset": job_seen, "searchText": search_term, "appliedFacets": {"locationCountry": [""] if not FILTER_US_ONLY else ["USA"]}}
         res = fetch_url('POST', bulk_listings_url, bulk_listings_payload)
         
         if res.get('error'):
