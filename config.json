@@ -3,11 +3,14 @@
   "LAST_PROCESSED_PATH": "./last_processed",
   "EXTRACT_START": 0,
   "EXTRACT_END": 100,
-  "DAYS_LOOKBACK": 5,
+  "DAYS_LOOKBACK": 30,
   "FILTER_US_ONLY": false,
-  "MIN_RELEVANCE_SCORE": 0.5,
-  "NUM_THREADS": 5,
+  "MIN_RELEVANCE_SCORE": 0.6,
+  "NUM_THREADS": 2,
   "USE_BERT": true,
+  "MAX_RAM_PERCENT": 50,
+  "CHECK_RAM_INTERVAL": 10,
+  "MAX_TASKS_PER_CHILD": 5,
   "SEARCH_TERMS": [
     "Artificial Intelligence",
     "Machine Learning",
@@ -18,49 +21,86 @@
     "NLP",
     "Generative AI",
     "RAG",
-    "Computer Vision"
+    "Cloud ML/AI",
+    "Edge AI",
+    "ML Research",
+    "ML Engineering"
   ],
   "term_mappings": {
-    "ai": "artificial intelligence AI machine learning deep learning neural networks autonomous systems robotics intelligent systems cognitive computing AI/ML edge AI embedded AI applied AI AI research AI engineering AI development AI solutions AI architecture",
+    "artificial": "artificial intelligence AI machine learning deep learning neural networks autonomous systems robotics intelligent systems cognitive computing",
+    "intelligence": "artificial intelligence AI cognitive computing intelligent systems machine learning deep learning neural networks",
     
-    "ml": "machine learning ML deep learning neural networks pytorch tensorflow scikit-learn MLOps model training data science predictive modeling statistical learning machine learning engineer ML systems ML infrastructure ML pipeline ML architecture",
+    "machine": "machine learning ML deep learning neural networks pytorch tensorflow scikit-learn MLOps model training ",
+    "learning": "machine learning deep learning transfer learning reinforcement learning supervised learning unsupervised learning neural networks pytorch tensorflow",
     
-    "deep_learning": "neural networks CNN RNN LSTM transformer architecture pytorch tensorflow keras deep neural networks DNN backpropagation training optimization convolutional neural networks recurrent neural networks attention mechanisms transfer learning",
+    "deep": "deep learning neural networks CNN RNN LSTM transformer deep neural networks DNN pytorch tensorflow",
     
-    "computer_vision": "CV computer vision image processing object detection semantic segmentation YOLO UNet EfficientNet ResNet VAE GAN ViT OpenCV image recognition visual AI CLIP image classification instance segmentation feature extraction SAM Meta SAM 2",
+    "applied": "applied AI practical AI implementation deployment production systems real-world applications pytorch tensorflow onnx openvino openai tensorflow lite tensorrt",
+    "ai": "artificial intelligence AI machine learning deep learning neural networks autonomous systems robotics cognitive computing",
     
-    "llm": "large language model LLM GPT-4 transformer language models NLP OpenAI API ChatGPT Vertex AI Ollama prompt engineering language understanding LLM evaluation LLM testing LLM benchmarking LLM optimization LLM fine-tuning",
+    "ml": "machine learning ML deep learning neural networks model training data science pytorch tensorflow",
+    "systems": "systems engineering distributed systems scalable architecture system design infrastructure",
     
-    "rag": "retrieval augmented generation RAG vector database knowledge base information retrieval context awareness semantic search langchain document processing RAG debugging RAG evaluation RAG optimization RAG framework RAG system",
+    "llm": "large language model LLM GPT-4 transformer language models NLP OpenAI API ChatGPT prompt engineering",
     
-    "mlops": "MLOps CI/CD pipeline orchestration model deployment model monitoring drift detection testing frameworks model optimization containerization docker kubernetes Apache Airflow model versioning model registry model serving",
+    "nlp": "natural language processing NLP computational linguistics text analysis language models BERT transformers pytorch tensorflow openai vertex ai chatgpt",
     
-    "edge_ai": "edge computing embedded systems Nvidia Jetson Ambarella CV22 FPGA edge deployment quantization pruning TensorRT ONNX real-time inference edge optimization edge ML edge analytics embedded ML",
+    "generative": "generative models GAN VAE diffusion models text-to-image generation synthetic data generative AI text generation text-to-text language generation text synthesis GPT LLM transformer models sequence-to-sequence text GenAI large language models",
     
-    "data_science": "data analysis pandas numpy matplotlib seaborn scipy data visualization statistical analysis feature engineering ETL pipeline data processing data mining data modeling data engineering",
+    "rag": "retrieval augmented generation RAG vector database knowledge base information retrieval context awareness vector embeddings pytorch tensorflow openai semantic search",
     
-    "xai": "explainable AI XAI model interpretability neuro-symbolic AI transparency model debugging interpretable ML model evaluation metrics model validation model verification model robustness adversarial testing",
+    "computer": "computer vision computer science computational methods computer engineering pytorch tensorflow",
+    "vision": "computer vision CV image processing object detection semantic segmentation visual AI pytorch tensorflow",
     
-    "generative_ai": "generative models GAN VAE diffusion models stable diffusion text-to-image image generation synthetic data augmentation generative adversarial networks variational autoencoders latent diffusion",
+    "cloud": "cloud computing AWS GCP Azure cloud deployment serverless microservices cloud infrastructure pytorch tensorflow",
     
-    "nlp": "natural language processing NLP computational linguistics text analysis language models sentiment analysis text classification information extraction BERT transformers token classification sequence labeling",
+    "edge": "edge computing edge AI edge ML TinyML embedded systems edge deployment real-time inference pytorch tensorflow",
     
-    "robotics": "robotics autonomous systems ROS navigation planning control systems sensor fusion localization mapping SLAM motion planning robotics perception robotics control autonomous navigation",
+    "research": "research methodology experimental design literature review academic research industry research pytorch tensorflow",
     
-    "cloud_ml": "cloud computing GCP AWS cloud deployment serverless microservices cloud run vertex AI lambda functions distributed computing cloud infrastructure cloud optimization cloud scaling",
+    "engineering": "software engineering ML engineering system engineering production deployment MLOps pytorch tensorflow",
     
-    "model_optimization": "model compression quantization pruning distillation layer fusion model efficiency performance optimization inference optimization TensorRT model acceleration hardware acceleration",
+    "model": "model optimization model compression model quantization model pruning model deployment model serving model monitoring pytorch tensorflow",
+    "optimization": "performance optimization model optimization hyperparameter optimization training optimization inference optimization",
     
-    "testing_frameworks": "unit testing integration testing system testing performance testing stress testing model testing evaluation metrics benchmarking quality assurance validation frameworks",
+    "deployment": "production deployment model deployment system deployment cloud deployment edge deployment onnx tensorrt nvidia tensorflow lite ",
     
-    "deployment": "production deployment model serving API development REST APIs Flask microservices containerization orchestration scaling monitoring observability",
-    
-    "tools_frameworks": "Git GitHub Actions Docker Kubernetes Jira CUDA PyTorch Lightning Weights & Biases MLflow DVC Optuna Ray Tune Gradio Streamlit FastAPI",
-    
-    "research_skills": "research methodology experimental design ablation studies literature review paper implementation model architecture design algorithm development",
-    
-    "system_design": "distributed systems scalable architecture high availability fault tolerance system optimization performance tuning bottleneck analysis",
-    
-    "interview_skills": "technical interviews coding challenges system design interviews ML design ML system design behavioral interviews project discussions"
-  }
+    "embedded": "embedded systems embedded AI edge computing IoT AI mobile AI hardware acceleration pruning quantization"
+  },
+  "NEGATIVE_TERMS": [
+    "sales",
+    "account executive",
+    "business development",
+    "human resources",
+    "HR",
+    "recruiter",
+    "recruiting",
+    "talent acquisition",
+    "customer success",
+    "customer support",
+    "marketing",
+    "social media",
+    "content writer",
+    "technical writer",
+    "project manager",
+    "scrum master",
+    "product owner",
+    "finance",
+    "accounting",
+    "administrative",
+    "office manager",
+    "executive assistant",
+    "receptionist",
+    "Java",
+    "C#",
+    "JavaScript",
+    "Ruby",
+    "PHP",
+    "Swift",
+    "Kotlin",
+    "Go",
+    "Rust",
+    "TypeScript",
+    "Scala"
+  ]
 } 
